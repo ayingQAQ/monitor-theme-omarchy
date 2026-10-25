@@ -71,7 +71,9 @@ function setupPaletteSelect() {
   mount(sel, `<option value="">${tr("auto")}</option>` + paletteNames().map((n) => `<option value="${n}">${n}</option>`).join(""));
   sel.value = chosenPalette() || "";
   sel.hidden = false;
-  sel.onchange = () => { store.set(sel.value); applyPalette(currentPalette()); status(); };
+  const fit=()=>{sel.style.width=`${wcw(sel.selectedOptions[0]?.textContent||'')+1}ch`;};
+  fit();
+  sel.onchange = () => { store.set(sel.value); fit(); applyPalette(currentPalette()); status(); };
 }
 dark.addEventListener("change", () => applyPalette(currentPalette()));
 
@@ -185,8 +187,9 @@ function charWidth() {
 }
 function calcWidth() {
   const available=Math.max(0,document.documentElement.clientWidth-16),gap=14,cell=charWidth();
-  const columns=Math.max(1,Math.floor((available+gap)/(34*cell+gap)));
-  W=Math.max(20,Math.min(46,Math.floor((available-gap*(columns-1))/columns/cell)));
+  const columns=Math.max(1,Math.floor((available+gap)/(320+gap)));
+  W=Math.max(20,Math.floor((available-gap*(columns-1))/columns/cell));
+  $("grid").style.setProperty("--columns",columns);
   $("grid").style.setProperty("--w", W);
 }
 function layout() {
@@ -321,6 +324,7 @@ function stepPalette(dir) {
   const next = cycle(paletteNames(), currentPalette(), dir);
   store.set(next);
   $("palette").value = next;
+  $("palette").style.width=`${wcw(next)+1}ch`;
   applyPalette(next);
 }
 function stepGroup(dir) {

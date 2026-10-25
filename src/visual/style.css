@@ -120,14 +120,13 @@ body { padding-bottom: 34px; }
 @media(prefers-reduced-motion:reduce) { #saver { display:none !important; } }
 .cell { display:inline-block; width:1ch; text-align:center; }
 .meter-fill .cell, .meter-empty .cell { height:12px; line-height:12px; vertical-align:middle; overflow:hidden; text-indent:-9999px; }
-.meter-fill .cell { background:currentColor; }
-.meter-empty .cell { background-image:radial-gradient(currentColor .5px,transparent .75px); background-size:2px 2px; }
+.meter-fill .cell,.meter-empty .cell { background-color:transparent; background-image:radial-gradient(currentColor .65px,transparent .8px); background-size:2px 2px; }
 
 /* Terminal controls: keep native semantics, render like bracketed commands. */
 .palette-control { display:inline-flex; align-items:center; color:var(--dark-foreground); white-space:nowrap; }
 .palette-control:has(select[hidden]) { display:none; }
-.palette-control .sel { appearance:none; -webkit-appearance:none; border:0; border-radius:0; background:transparent; color:var(--foreground); padding:1px .8ch; min-width:16ch; cursor:pointer; }
-.palette-control .sel:focus-visible { outline:1px solid var(--accent); outline-offset:2px; }
+.palette-control .sel { appearance:none; -webkit-appearance:none; border:0; border-radius:0; background:transparent; color:var(--foreground); padding:1px .25ch; min-width:0; cursor:pointer; box-shadow:none; outline:none; }
+.palette-control .sel:focus-visible { outline:none; text-decoration:underline; text-underline-offset:4px; }
 .palette-control:hover,.palette-control:focus-within { color:var(--accent); }
 .palette-control option { color:var(--foreground); background:var(--background); }
 .status { gap:8px; }
@@ -135,4 +134,17 @@ body { padding-bottom: 34px; }
 .status .hk::before { content:'['; color:var(--dark-foreground); }
 .status .hk::after { content:']'; color:var(--dark-foreground); }
 .status .hk:hover,.status .hk:focus-visible { color:var(--accent); background:transparent; }
-@media(max-width:480px) { .status { gap:4px; } .status .hk { padding:0 2px; } .palette-control .sel { min-width:13ch; } }
+@media(max-width:480px) { .status { gap:4px; } .status .hk { padding:0 2px; } }
+.ping-stats,.ping-chart { margin:0 .5ch; border-inline:1px solid var(--bc); }
+.ping-stats { display:flex; flex-wrap:wrap; gap:4px 16px; padding:7px 10px 3px; font-size:12px; }
+.ping-chart { height:160px; min-width:0; }
+.ping-chart.big { height:240px; }
+.ping-chart svg { display:block; max-width:100%; overflow:visible; }
+.ping-grid { stroke:var(--selection); stroke-dasharray:3 4; stroke-width:.6; }
+.ping-axis { fill:var(--light-foreground); font:11px var(--font); }
+.ping-line { stroke:var(--cyan); stroke-linejoin:round; stroke-linecap:round; }
+.ping-dot { fill:var(--cyan); }
+.ping-loss { stroke:var(--red); }
+.grid { grid-template-columns:repeat(var(--columns,1),minmax(0,1fr)); justify-content:stretch; }
+.card .ln.t,.card .ln.u { position:relative; }
+.card .ln.t > .b:last-child,.card .ln.u > .b:last-child { position:absolute; right:0; }

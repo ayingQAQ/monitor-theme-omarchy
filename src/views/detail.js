@@ -1,5 +1,6 @@
 import {box,bytes,uptime,ms,graph,meter,clip,txt,padR} from '../render/util.js';
 import {mount} from '../render/dom.js';
+import {drawPingChart} from '../render/ping-chart.js';
 import {ranges,pingModel,series,expiry,trafficUsed,finite} from '../data/model.js';
 import {history,clearHistory} from '../data/history.js';
 import {getLang,t} from '../i18n/index.js';
@@ -57,14 +58,11 @@ export function createDetail(app){
  }
  const tasks=()=>pingModel(slots.ping||{});
  function taskBlock(I,task,big){
-  const b=box(I),L=[b.top(` ${task.name} `)],gw=I-2,end=Date.now()/1000,start=end-hours()*3600;
-  L.push(b.row([['d',` ${word('last bucket','最近时间桶')} `],['w',ms(task.last)]]));
-  for(const [label,v]of [['min',ms(task.min)],['max',ms(task.max)],['loss',task.loss===null?'—':`${task.loss.toFixed(1)}%`]])L.push(b.row([['d',` ${label} `],['w',v]]));
-  const values=series(task.points,'latency',start,end,gw*2),top=Math.max(5,...task.points.map(p=>p.band?.[1]??p.latency??0))*1.1;
-  for(const g of graph(values,gw,big?8:3,top))L.push(b.row([['',' '],['n',g]]));
-  const loss=Array(gw).fill(' ');for(const p of task.points)if(p.loss>0&&p.ts>=start&&p.ts<=end)loss[Math.min(gw-1,Math.floor((p.ts-start)/(end-start)*gw))]='×';
-  if(loss.includes('×'))L.push(b.row([['',' '],['r',loss.join('')]]));
-  L.push(b.row([['d',` -${rangeLabel()} · ${word('bucket median','时间桶中位数')} · 0–${ms(top)}`]]));
+  const b=box(I),L=[b.top(` ${task.name} `)];
+  const stats=[[word('last bucket','最近时间桶'),ms(task.last)],[word('min','最低'),ms(task.min)],[word('max','最高'),ms(task.max)],[word('loss','丢包'),task.loss===null?'—':`${task.loss.toFixed(1)}%`]];
+  L.push(`<div class="ping-stats">${stats.map(([label,value])=>`<span><span class="d">${txt(label)} </span><span class="w">${txt(value)}</span></span>`).join('')}</div>`);
+  L.push(`<div class="ping-chart${big?' big':''}" data-ping="${task.id}"></div>`);
+  L.push(b.row([['d',` -${rangeLabel()} · ${word('bucket median · × loss','时间桶中位数 · × 丢包')}`]]));
   L.push(b.bottom());return `<div class="blk${task.id===(zoom??tasks()[selected]?.id)?' cur':''}" data-task="${task.id}" tabindex="0" role="button" aria-label="${task.id}">${L.join('')}</div>`;
  }
  function render(){
@@ -75,6 +73,8 @@ export function createDetail(app){
   const ts=tasks();selected=Math.max(0,Math.min(selected,ts.length-1));if(zoom!==null&&!ts.some(x=>x.id===zoom))zoom=null;
   const ping=ts.length?(zoom!==null?ts.filter(x=>x.id===zoom):ts).map(x=>taskBlock(I,x,zoom!==null)).join(''):`<div class="empty">${txt(loading?t('loading'):failure||t('noTasks'))}</div>`;
   mount($('detail-body'),title+controls+(tab==='ping'?ping:configBox(I,n)+resources(I,n)+`<div class="rule">${txt(t('sec.ping'))}</div>`+ping));
+  const end=Date.now()/1000,start=end-hours()*3600;
+  for(const host of $('detail-body').querySelectorAll('[data-ping]')){const task=ts.find(x=>x.id===Number(host.dataset.ping));if(task)drawPingChart(host,task,{start,end,step:slots.ping?.step||60,language:getLang()});}
  }
  function layout(){width=Math.max(20,Math.min(110,Math.floor((innerWidth-24)/app.cw())));$('detail').style.setProperty('--dw',width);render();}
  function show(next){if(id===next){render();return;}stop();id=next;tab='overview';zoom=null;selected=0;slots={metrics:null,ping:null};$('detail').hidden=false;layout();ensure();timer=setInterval(()=>ensure(),30000);scrollTo(0,0);}

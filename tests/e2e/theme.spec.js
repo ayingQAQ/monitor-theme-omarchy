@@ -2,6 +2,16 @@ import {test,expect} from '@playwright/test';
 test('fresh visitors start with Catppuccin and can use terminal-styled controls',async({page})=>{
  await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);await expect(page.locator('#st-pal')).toHaveText('catppuccin');await expect(page.locator('.palette-control')).toBeVisible();await page.locator('#palette').selectOption('nord');await expect(page.locator('#st-pal')).toHaveText('nord');
 });
+test('palette control fits its text and uses an underline instead of a focus box',async({page})=>{
+ await page.goto('/');await page.locator('#palette').selectOption('catppuccin');await page.locator('#palette').focus();
+ const style=await page.locator('#palette').evaluate(el=>({outline:getComputedStyle(el).outlineStyle,width:el.getBoundingClientRect().width,ch:parseFloat(getComputedStyle(el).fontSize)}));
+ await page.locator('#palette').blur();
+ expect(style.outline).toBe('none');expect(style.width).toBeLessThan(140);
+});
+test('ping tasks render responsive SVG polylines with readable axes and loss markers',async({page})=>{
+ await page.goto('/#/node/1');await expect(page.locator('.ping-chart svg').first()).toBeVisible();await expect(page.locator('.ping-line').first()).toHaveAttribute('d',/M.*L/);await expect(page.locator('.ping-loss').first()).toBeVisible();await expect(page.locator('.ping-chart').first()).toContainText('ms');
+ await page.setViewportSize({width:320,height:850});await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
 test('faithful list, Monitor detail, routing, languages and palettes',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);
  await expect(page.locator('#demo')).toBeVisible();await page.locator('.card').first().click();await expect(page).toHaveURL(/#\/node\/1/);await expect(page.locator('#detail-body')).toContainText('config');
@@ -36,6 +46,11 @@ test('medium windows use two compact columns instead of a narrow centered stack'
  const layout=await page.locator('#grid').evaluate(el=>{const a=el.children[0].getBoundingClientRect(),b=el.children[1].getBoundingClientRect();return {firstTop:a.top,secondTop:b.top,firstLeft:a.left,secondLeft:b.left,height:a.height};});
  expect(layout.firstTop).toBe(layout.secondTop);expect(layout.secondLeft).toBeGreaterThan(layout.firstLeft);expect(layout.height).toBeLessThanOrEqual(180);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
+test('card rows fill available width and column count stays stable after font loading',async({page})=>{
+ await page.setViewportSize({width:1645,height:850});await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);await page.screenshot();
+ const geometry=()=>page.locator('#grid').evaluate(el=>{const cards=[...el.children].map(n=>n.getBoundingClientRect()),first=cards.filter(r=>r.top===cards[0].top),grid=el.getBoundingClientRect();return {columns:first.length,left:first[0].left-grid.left,right:grid.right-first.at(-1).right};});
+ let g=await geometry();expect(g.columns).toBe(4);expect(g.left).toBeLessThanOrEqual(9);expect(g.right).toBeLessThanOrEqual(9);await page.setViewportSize({width:1630,height:850});await page.waitForTimeout(250);g=await geometry();expect(g.columns).toBe(4);expect(g.right).toBeLessThanOrEqual(9);
+});
 test('native buttons activate with Enter and retain focus across snapshots',async({page})=>{
  await page.goto('/');const group=page.getByRole('button',{name:'[prod]',exact:true});await group.focus();await page.keyboard.press('Enter');await expect(page.locator('.card')).toHaveCount(2);await expect(page).not.toHaveURL(/node/);
  await page.locator('.card').first().click();const ping=page.getByRole('button',{name:'ping',exact:true});await ping.focus();await page.keyboard.press('Enter');await expect(page.locator('#st-mode')).toHaveText('PING');await ping.focus();await page.waitForTimeout(2300);await expect(ping).toBeFocused();
@@ -52,7 +67,8 @@ test('meter filled and empty cells share the same rectangle independent of glyph
   const fill=el.querySelector('.meter-fill .cell'),empty=el.querySelector('.meter-empty .cell');if(!fill||!empty)return null;
   const a=fill.getBoundingClientRect(),b=empty.getBoundingClientRect();return {heightA:a.height,heightB:b.height,topA:a.top,topB:b.top,widthA:a.width,widthB:b.width,fill:getComputedStyle(fill).backgroundColor,pattern:getComputedStyle(empty).backgroundImage};
  });
- expect(geometry).not.toBeNull();expect(geometry.heightA).toBe(12);expect(geometry.heightB).toBe(12);expect(geometry.topA).toBe(geometry.topB);expect(geometry.widthA).toBe(geometry.widthB);expect(geometry.fill).not.toBe('rgba(0, 0, 0, 0)');expect(geometry.pattern).toContain('radial-gradient');
+ expect(geometry).not.toBeNull();expect(geometry.heightA).toBe(12);expect(geometry.heightB).toBe(12);expect(geometry.topA).toBe(geometry.topB);expect(geometry.widthA).toBe(geometry.widthB);expect(geometry.pattern).toContain('radial-gradient');
+ const patterns=await page.locator('.card').first().evaluate(el=>[...el.querySelectorAll('.meter-fill .cell,.meter-empty .cell')].map(n=>getComputedStyle(n).backgroundImage.replace(/rgba?\([^)]*\)/g,'COLOR')+' '+getComputedStyle(n).backgroundSize));expect(new Set(patterns).size).toBe(1);
 });
 test('groups and search affect the visible summary; offline and waiting differ',async({page})=>{
  await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);await expect(page.locator('#grid')).toContainText('waiting');await expect(page.locator('#grid')).toContainText('offline');
