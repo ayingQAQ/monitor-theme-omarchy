@@ -110,7 +110,7 @@ jobs:
             fi
             gh release upload "$RELEASE_TAG" release-files/theme.tar.gz release-files/theme.tar.gz.sha256 release-files/preview.png --clobber
           else
-            args=(--verify-tag --draft --title "$RELEASE_TAG · Omarchy for Monitor")
+            args=(--verify-tag --draft --title "$RELEASE_TAG")
             if [[ -f "$notes" ]]; then
               args+=(--notes-file "$notes")
             else
