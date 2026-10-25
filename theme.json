@@ -3,8 +3,8 @@
   "short": "monitor-omarchy",
   "description": "Faithful terminal-style Omarchy port for Monitor / Omarchy 终端风格移植",
   "version": "0.1.0",
-  "author": "",
-  "url": "",
+  "author": "ayingQAQ",
+  "url": "https://github.com/ayingQAQ/monitor-theme-omarchy",
   "config": [
     {
       "key": "language",

@@ -1,8 +1,8 @@
 # Verification record
 
-Date: 2026-10-26. Independent project on `feat/monitor-port`; no remote repository or Release created.
+Date: 2026-10-26. Initial implementation verified locally; public release preparation targets `ayingQAQ/monitor-theme-omarchy`, tag `v0.1.0`.
 
-Final results: 14/14 Node tests and 51/51 browser cases passed (17 each in Chromium, Firefox and WebKit). Production build, compiled-page smoke check, screenshot width assertions, archive validation and staged whitespace check passed. Final local archive is 83,336 bytes with 12 entries; its current SHA-256 is stored in `theme.tar.gz.sha256`.
+Final results: 14/14 Node tests and 51/51 browser cases passed (17 each in Chromium, Firefox and WebKit). Production build, compiled-page smoke check, screenshot width assertions, archive validation and staged whitespace check passed. Archive size and digest change when release metadata is filled. The packaged manifest, archive root and limits are checked on each build; the current SHA-256 is stored in `theme.tar.gz.sha256`.
 
 ## Implementation
 
@@ -46,4 +46,4 @@ An independent reviewer identified native Enter interception, lost focus during 
 
 No test Hub address or credentials were supplied. Docker is installed but its Linux daemon is not running, so this task did not install the theme into a real Hub or change a running site. Archive checks validate its structure, sizes, gzip completion and manifest; those checks do not replace a real Hub installation.
 
-The author and URL fields intentionally remain blank until publication identity is supplied. All six required metadata fields are present. The archive and SHA-256 sidecar are local build artifacts.
+Release metadata identifies `ayingQAQ` as the Monitor port maintainer and points to `https://github.com/ayingQAQ/monitor-theme-omarchy`. Original author attribution remains in LICENSE and THIRD_PARTY.md. All six required metadata fields are present. The archive and SHA-256 sidecar are published as Release assets.
