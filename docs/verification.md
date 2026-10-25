@@ -40,6 +40,12 @@ An independent reviewer identified native Enter interception, lost focus during 
 
 ## Remaining integration checks
 
+### v0.1.2 regression record
+
+GitHub-hosted Linux run [40219236644](https://github.com/ayingQAQ/monitor-theme-omarchy/actions/runs/40219236644) passed the full suite: 16 Node tests and 66 Chromium/Firefox/WebKit cases, plus build, archive and production smoke checks.
+
+The simultaneous local Windows full run reported 63 passing cases and 3 timeouts: Firefox `palette control fits its text and uses an underline instead of a focus box` timed out during browser-context teardown; WebKit `native buttons activate with Enter and retain focus across snapshots` timed out while waiting for a stable click target; WebKit `no horizontal overflow at 768px including detail` timed out waiting for the detail view. The isolated Firefox focus case also reproduced its teardown timeout. These are recorded rather than counted as local passes; all corresponding Linux engine cases passed. The local Chromium targeted cases and 320/375/768px screenshot-width checks passed. Physical Windows Firefox/WebKit interaction remains worth checking independently.
+
 - Real Monitor Hub upload, theme activation, custom site icon override, configuration persistence through reinstall, and actual Hub upgrade.
 - GitHub installation and automatic update after a real public repository, author/URL and official Release exist.
 - Physical phone and real Safari interaction.
