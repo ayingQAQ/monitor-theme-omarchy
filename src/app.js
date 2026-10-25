@@ -37,13 +37,13 @@ let banner, bannerText = "";
 
 // ---- palette ----
 const dark = matchMedia("(prefers-color-scheme: dark)");
-const adminDefault = () => (dark.matches ? settings.palette_dark || "tokyo-night" : settings.palette_light || "catppuccin-latte");
+const adminDefault = () => (dark.matches ? settings.palette_dark || "catppuccin" : settings.palette_light || "catppuccin");
 const colorCache = {};
 const TOKENS = { main: "accent", bright: "bright-foreground", dim: "muted", green: "green", cyan: "cyan", blue: "blue", orange: "orange", red: "red", yellow: "yellow" };
 const color = (tok) => colorCache[tok] || (colorCache[tok] = getComputedStyle(document.documentElement).getPropertyValue("--" + (TOKENS[tok] || tok)).trim() || "#888");
 
 function applyPalette(name) {
-  const p = PALETTES[name] || PALETTES["tokyo-night"] || Object.values(PALETTES)[0];
+  const p = PALETTES[name] || PALETTES["catppuccin"] || Object.values(PALETTES)[0];
   if (!p) return;
   const root = document.documentElement.style;
   const c = (k, fb) => p[k] || p[fb] || p.foreground;
@@ -96,7 +96,7 @@ function cardHTML(n, i) {
   const meterRow = (label, p, has) => b.row([["d", ` ${label} `], ...meter(p / 100, bl), ["w", (has ? p.toFixed(1) + "%" : "-").padStart(7) + " "]]);
   const cpu = on && finite(r.cpu) ? r.cpu : null, mem = on && finite(r.mem_used) && r.mem_total>0 ? pct(r.mem_used, r.mem_total) : null, dsk = on && finite(r.disk_used) && r.disk_total>0 ? pct(r.disk_used, r.disk_total) : null;
   L.push(meterRow("cpu", cpu??0, cpu!==null));
-  for (const g of graph(h.cpu, I - 2, 2, 100)) L.push(b.row([["", " "], ["a", g]]));
+  for (const g of graph(h.cpu, I - 2, 1, 100)) L.push(b.row([["", " "], ["a", g]]));
   L.push(meterRow("mem", mem??0, mem!==null));
   L.push(meterRow("dsk", dsk??0, dsk!==null));
 
@@ -184,7 +184,9 @@ function charWidth() {
   return cwCache;
 }
 function calcWidth() {
-  W = Math.max(20, Math.min(46, Math.floor((innerWidth - 16) / charWidth())));
+  const available=Math.max(0,document.documentElement.clientWidth-16),gap=14,cell=charWidth();
+  const columns=Math.max(1,Math.floor((available+gap)/(34*cell+gap)));
+  W=Math.max(20,Math.min(46,Math.floor((available-gap*(columns-1))/columns/cell)));
   $("grid").style.setProperty("--w", W);
 }
 function layout() {
@@ -432,7 +434,7 @@ addEventListener('pageshow',e=>{if(e.persisted&&!document.hidden){lastSample=0;s
 
 // ---- boot ----
 banner=new OFX.Banner($('banner'),color);
-applyPalette('tokyo-night');setLang(detect(''),false);applyStatic();
+applyPalette('catppuccin');setLang(detect(''),false);applyStatic();
 let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{cwCache=0;layout();},120);});
 document.fonts?.ready.then(()=>{cwCache=0;layout();});document.fonts?.addEventListener('loadingdone',()=>{cwCache=0;layout();});
 $('search-button').addEventListener('click',openSearch);

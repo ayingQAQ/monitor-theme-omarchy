@@ -2,7 +2,7 @@
   "name": "Omarchy · Monitor",
   "short": "monitor-omarchy",
   "description": "Faithful terminal-style Omarchy port for Monitor / Omarchy 终端风格移植",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "ayingQAQ",
   "url": "https://github.com/ayingQAQ/monitor-theme-omarchy",
   "config": [
@@ -30,7 +30,7 @@
       "key": "palette_dark",
       "type": "select",
       "label": "默认调色板（暗色）",
-      "default": "tokyo-night",
+      "default": "catppuccin",
       "options": [
         {
           "value": "catppuccin",
@@ -130,7 +130,7 @@
       "key": "palette_light",
       "type": "select",
       "label": "默认调色板（亮色）",
-      "default": "catppuccin-latte",
+      "default": "catppuccin",
       "options": [
         {
           "value": "catppuccin",

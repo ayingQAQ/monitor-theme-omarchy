@@ -53,7 +53,7 @@ sha256sum -c theme.tar.gz.sha256
 
 - **终端视觉**：等宽排版、直角字符框、btop 风格资源条、CPU 与网速字符图。
 - **ASCII 横幅**：英文和中文站点名；五种效果、随机播放、点击重播。
-- **23 套配色**：跟随系统深浅色；站长设置默认配色，访客可自行切换。
+- **23 套配色**：默认使用 Catppuccin；站长可分别设置深浅色默认配色，访客可自行切换。
 - **中英文界面**：访客选择优先，其次为站点默认和浏览器语言。
 - **节点浏览**：分组、搜索、在线与网速汇总；汇总跟随当前筛选结果。
 - **节点详情**：机器信息、实时资源、历史曲线、费用、账期、到期与流量。
@@ -97,8 +97,8 @@ sha256sum -c theme.tar.gz.sha256
 | 设置 | 默认值 | 说明 |
 | --- | --- | --- |
 | 默认语言 | `auto` | 可选 `auto`、`en`、`zh` |
-| 暗色配色 | `tokyo-night` | 系统为暗色时采用 |
-| 亮色配色 | `catppuccin-latte` | 系统为亮色时采用 |
+| 暗色配色 | `catppuccin` | 系统为暗色时采用 |
+| 亮色配色 | `catppuccin` | 系统为亮色时采用 |
 | 允许切换配色 | 开启 | 关闭后忽略访客已保存的配色 |
 | 显示分组筛选 | 开启 | 隐藏控件不会删除节点 |
 | 横幅文字 | 留空 | 默认使用站点名 |
@@ -119,71 +119,6 @@ sha256sum -c theme.tar.gz.sha256
 - 即使浏览器已登录管理员，本主题也不展示私有地址、hostname、私有备注或 token。
 
 接口处理依据：[主题开发指南](https://monitor-document.pages.dev/dev/theme)、[架构与协议](https://monitor-document.pages.dev/dev/architecture)、[流量说明](https://monitor-document.pages.dev/config/traffic)。
-
-## 开发
-
-使用 Node.js **22.12+ 或 24 LTS** 与 npm；仓库提交了锁文件。
-
-```powershell
-npm ci
-npm run dev:demo
-```
-
-演示模式使用生成数据并明确标记 DEMO。正常开发通过 `MONITOR_HUB` 指向测试 Hub：
-
-```powershell
-# Windows PowerShell
-$env:MONITOR_HUB = 'https://your-test-hub.example'
-npm run dev
-```
-
-```bash
-# Linux / macOS
-MONITOR_HUB=https://your-test-hub.example npm run dev
-```
-
-不设置时代理到 `http://127.0.0.1:9911`。Vite 同时代理 `/api` 和 WebSocket；测试 Hub 需要开放公开状态页。
-
-技术实现为 **原生 JavaScript ES Modules + Vite**。`src/data/` 负责协议与连接，`src/views/` 负责页面，`src/render/` 负责字符绘制，`src/visual/` 保留上游视觉资源。生产构建不包含 `dev/` 模拟接口，也不会断网自动切换假数据。
-
-### 检查与打包
-
-```powershell
-npm test
-npx playwright install chromium firefox webkit
-npm run test:e2e
-npm run package
-node scripts/smoke-production.mjs
-npm run check:package
-```
-
-Linux CI 可能还需要系统依赖，可使用 `npx playwright install --with-deps chromium firefox webkit`。
-
-`npm run package` 输出主题包与 SHA-256 文件，检查归档根目录、文件类型、体积、gzip 完整性及元数据。发布时可设置环境变量 `RELEASE_TAG`，校验 tag 与 `theme.json` 版本一致。
-
-```text
-theme.tar.gz
-├── theme.json
-├── preview.png
-├── LICENSE
-├── THIRD_PARTY.md
-├── THIRD_PARTY_NOTICES.txt
-└── dist/
-    ├── index.html
-    ├── favicon.svg
-    ├── apple-touch-icon.png
-    └── assets/
-```
-
-详情地址使用 `/#/node/<id>`，刷新及浏览器前进/后退均可用；`/admin` 由 Hub 提供。站点图标使用 Monitor 约定的固定路径，便于 Hub 替换。
-
-## 验证范围
-
-首版通过 **14 项 Node 测试、51 项浏览器检查**，涵盖 Chromium、Firefox、WebKit，另有生产构建、编译产物冒烟检查和安装包结构校验。
-
-以 Monitor 1.4.1 时代的接口形状为开发基线，对旧版可选字段做降级处理。**尚未在真实 Hub 上验证上传安装、设置持久化和升级，也未测试实体手机**；WebKit 引擎检查不等于验证所有 Safari/iOS 环境。完整记录见 [验证说明](docs/verification.md)。
-
-反馈问题时请附 Hub 版本、浏览器版本、屏幕尺寸和复现步骤，不要提交真实节点信息、密码或令牌。
 
 ## 来源与许可
 

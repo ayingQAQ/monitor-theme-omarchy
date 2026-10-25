@@ -1,4 +1,7 @@
 import {test,expect} from '@playwright/test';
+test('fresh visitors start with Catppuccin and can use terminal-styled controls',async({page})=>{
+ await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);await expect(page.locator('#st-pal')).toHaveText('catppuccin');await expect(page.locator('.palette-control')).toBeVisible();await page.locator('#palette').selectOption('nord');await expect(page.locator('#st-pal')).toHaveText('nord');
+});
 test('faithful list, Monitor detail, routing, languages and palettes',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);
  await expect(page.locator('#demo')).toBeVisible();await page.locator('.card').first().click();await expect(page).toHaveURL(/#\/node\/1/);await expect(page.locator('#detail-body')).toContainText('config');
@@ -27,6 +30,11 @@ test('storage methods may throw; preference works for the current session',async
 test('loaded fonts and viewport resizing keep character geometry aligned',async({page})=>{
  await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);await page.screenshot();await page.locator('.card').first().click();await expect(page.locator('.blk').first()).toBeVisible();await page.screenshot({fullPage:true});
  for(const width of [320,375,768]){await page.setViewportSize({width,height:850});await page.waitForTimeout(200);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);}
+});
+test('medium windows use two compact columns instead of a narrow centered stack',async({page})=>{
+ await page.setViewportSize({width:860,height:850});await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);await page.screenshot();
+ const layout=await page.locator('#grid').evaluate(el=>{const a=el.children[0].getBoundingClientRect(),b=el.children[1].getBoundingClientRect();return {firstTop:a.top,secondTop:b.top,firstLeft:a.left,secondLeft:b.left,height:a.height};});
+ expect(layout.firstTop).toBe(layout.secondTop);expect(layout.secondLeft).toBeGreaterThan(layout.firstLeft);expect(layout.height).toBeLessThanOrEqual(180);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 test('native buttons activate with Enter and retain focus across snapshots',async({page})=>{
  await page.goto('/');const group=page.getByRole('button',{name:'[prod]',exact:true});await group.focus();await page.keyboard.press('Enter');await expect(page.locator('.card')).toHaveCount(2);await expect(page).not.toHaveURL(/node/);

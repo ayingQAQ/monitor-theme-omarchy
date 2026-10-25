@@ -122,3 +122,17 @@ body { padding-bottom: 34px; }
 .meter-fill .cell, .meter-empty .cell { height:12px; line-height:12px; vertical-align:middle; overflow:hidden; text-indent:-9999px; }
 .meter-fill .cell { background:currentColor; }
 .meter-empty .cell { background-image:radial-gradient(currentColor .5px,transparent .75px); background-size:2px 2px; }
+
+/* Terminal controls: keep native semantics, render like bracketed commands. */
+.palette-control { display:inline-flex; align-items:center; color:var(--dark-foreground); white-space:nowrap; }
+.palette-control:has(select[hidden]) { display:none; }
+.palette-control .sel { appearance:none; -webkit-appearance:none; border:0; border-radius:0; background:transparent; color:var(--foreground); padding:1px .8ch; min-width:16ch; cursor:pointer; }
+.palette-control .sel:focus-visible { outline:1px solid var(--accent); outline-offset:2px; }
+.palette-control:hover,.palette-control:focus-within { color:var(--accent); }
+.palette-control option { color:var(--foreground); background:var(--background); }
+.status { gap:8px; }
+.status .hk { color:var(--light-foreground); background:transparent; padding:0 3px; gap:2px; }
+.status .hk::before { content:'['; color:var(--dark-foreground); }
+.status .hk::after { content:']'; color:var(--dark-foreground); }
+.status .hk:hover,.status .hk:focus-visible { color:var(--accent); background:transparent; }
+@media(max-width:480px) { .status { gap:4px; } .status .hk { padding:0 2px; } .palette-control .sel { min-width:13ch; } }
