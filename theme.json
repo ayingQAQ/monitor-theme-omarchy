@@ -1,0 +1,290 @@
+{
+  "name": "Omarchy · Monitor",
+  "short": "monitor-omarchy",
+  "description": "Faithful terminal-style Omarchy port for Monitor / Omarchy 终端风格移植",
+  "version": "0.1.0",
+  "author": "",
+  "url": "",
+  "config": [
+    {
+      "key": "language",
+      "type": "select",
+      "label": "默认语言",
+      "default": "auto",
+      "options": [
+        {
+          "value": "auto",
+          "label": "auto"
+        },
+        {
+          "value": "en",
+          "label": "en"
+        },
+        {
+          "value": "zh",
+          "label": "zh"
+        }
+      ]
+    },
+    {
+      "key": "palette_dark",
+      "type": "select",
+      "label": "默认调色板（暗色）",
+      "default": "tokyo-night",
+      "options": [
+        {
+          "value": "catppuccin",
+          "label": "catppuccin"
+        },
+        {
+          "value": "catppuccin-latte",
+          "label": "catppuccin-latte"
+        },
+        {
+          "value": "ethereal",
+          "label": "ethereal"
+        },
+        {
+          "value": "everforest",
+          "label": "everforest"
+        },
+        {
+          "value": "flexoki-light",
+          "label": "flexoki-light"
+        },
+        {
+          "value": "gruvbox",
+          "label": "gruvbox"
+        },
+        {
+          "value": "hackerman",
+          "label": "hackerman"
+        },
+        {
+          "value": "kanagawa",
+          "label": "kanagawa"
+        },
+        {
+          "value": "last-horizon",
+          "label": "last-horizon"
+        },
+        {
+          "value": "lumon",
+          "label": "lumon"
+        },
+        {
+          "value": "lupine",
+          "label": "lupine"
+        },
+        {
+          "value": "matte-black",
+          "label": "matte-black"
+        },
+        {
+          "value": "miasma",
+          "label": "miasma"
+        },
+        {
+          "value": "nord",
+          "label": "nord"
+        },
+        {
+          "value": "osaka-jade",
+          "label": "osaka-jade"
+        },
+        {
+          "value": "retro-82",
+          "label": "retro-82"
+        },
+        {
+          "value": "ristretto",
+          "label": "ristretto"
+        },
+        {
+          "value": "rose-pine",
+          "label": "rose-pine"
+        },
+        {
+          "value": "solitude",
+          "label": "solitude"
+        },
+        {
+          "value": "starship",
+          "label": "starship"
+        },
+        {
+          "value": "tokyo-night",
+          "label": "tokyo-night"
+        },
+        {
+          "value": "vantablack",
+          "label": "vantablack"
+        },
+        {
+          "value": "white",
+          "label": "white"
+        }
+      ]
+    },
+    {
+      "key": "palette_light",
+      "type": "select",
+      "label": "默认调色板（亮色）",
+      "default": "catppuccin-latte",
+      "options": [
+        {
+          "value": "catppuccin",
+          "label": "catppuccin"
+        },
+        {
+          "value": "catppuccin-latte",
+          "label": "catppuccin-latte"
+        },
+        {
+          "value": "ethereal",
+          "label": "ethereal"
+        },
+        {
+          "value": "everforest",
+          "label": "everforest"
+        },
+        {
+          "value": "flexoki-light",
+          "label": "flexoki-light"
+        },
+        {
+          "value": "gruvbox",
+          "label": "gruvbox"
+        },
+        {
+          "value": "hackerman",
+          "label": "hackerman"
+        },
+        {
+          "value": "kanagawa",
+          "label": "kanagawa"
+        },
+        {
+          "value": "last-horizon",
+          "label": "last-horizon"
+        },
+        {
+          "value": "lumon",
+          "label": "lumon"
+        },
+        {
+          "value": "lupine",
+          "label": "lupine"
+        },
+        {
+          "value": "matte-black",
+          "label": "matte-black"
+        },
+        {
+          "value": "miasma",
+          "label": "miasma"
+        },
+        {
+          "value": "nord",
+          "label": "nord"
+        },
+        {
+          "value": "osaka-jade",
+          "label": "osaka-jade"
+        },
+        {
+          "value": "retro-82",
+          "label": "retro-82"
+        },
+        {
+          "value": "ristretto",
+          "label": "ristretto"
+        },
+        {
+          "value": "rose-pine",
+          "label": "rose-pine"
+        },
+        {
+          "value": "solitude",
+          "label": "solitude"
+        },
+        {
+          "value": "starship",
+          "label": "starship"
+        },
+        {
+          "value": "tokyo-night",
+          "label": "tokyo-night"
+        },
+        {
+          "value": "vantablack",
+          "label": "vantablack"
+        },
+        {
+          "value": "white",
+          "label": "white"
+        }
+      ]
+    },
+    {
+      "key": "allow_switch",
+      "type": "boolean",
+      "label": "允许访客切换调色板",
+      "default": true
+    },
+    {
+      "key": "show_group",
+      "type": "boolean",
+      "label": "显示分组筛选",
+      "default": true
+    },
+    {
+      "key": "banner",
+      "type": "string",
+      "label": "横幅文字（默认站点名）",
+      "default": ""
+    },
+    {
+      "key": "intro",
+      "type": "select",
+      "label": "开场动画",
+      "default": "random",
+      "options": [
+        {
+          "value": "random",
+          "label": "random"
+        },
+        {
+          "value": "decrypt",
+          "label": "decrypt"
+        },
+        {
+          "value": "rain",
+          "label": "rain"
+        },
+        {
+          "value": "beams",
+          "label": "beams"
+        },
+        {
+          "value": "scatter",
+          "label": "scatter"
+        },
+        {
+          "value": "burn",
+          "label": "burn"
+        },
+        {
+          "value": "off",
+          "label": "off"
+        }
+      ]
+    },
+    {
+      "key": "screensaver",
+      "type": "boolean",
+      "label": "空闲 90 秒后启用屏保",
+      "default": true
+    }
+  ]
+}

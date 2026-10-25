@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitor · Omarchy</title>
+<meta name="description" content="A simple server monitor tool.">
+<link rel="icon" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+</head>
+<body>
+<div id="demo" hidden>DEMO · generated data / 演示数据</div>
+<div id="connection" role="status">Loading / 加载中…</div>
+<header class="top">
+  <canvas id="banner" role="img" aria-label="title" title="click to replay"></canvas>
+  <div class="stats" id="summary"></div>
+</header>
+<div id="list-view">
+  <nav class="ctl">
+    <span id="chips" hidden></span><button id="search-button" class="chip" aria-label="Search / 搜索">[/]</button>
+    <span class="spacer"></span>
+    <select id="palette" class="sel" hidden aria-label="palette"></select>
+  </nav>
+  <h2 class="rule" data-i18n="nodes">nodes</h2>
+  <main id="grid" class="grid"></main>
+  <p id="empty" class="empty" data-i18n="nonodes" hidden>no nodes</p>
+</div>
+<section id="detail" class="detail" hidden><div id="detail-body"></div></section>
+<footer class="status" id="status">
+  <span class="mode" id="st-mode">NORMAL</span>
+  <span class="flt" id="st-flt"></span>
+  <span class="nm" id="st-name"></span>
+  <span class="spacer"></span>
+  <span id="st-pos">0/0</span>
+  <span class="pal" id="st-pal"></span>
+  <button class="hk" id="st-lang" title="i">EN</button>
+  <a class="hk" id="st-admin" href="/admin" data-i18n="admin" title="a">admin</a>
+  <button class="hk" id="st-help" data-i18n="help">? help</button>
+  <label class="cmd" id="cmd" hidden>/<input id="cmd-in" autocomplete="off" spellcheck="false" aria-label="search"></label>
+</footer>
+<pre id="help" class="help" hidden></pre>
+<div id="saver"><canvas id="saver-cv"></canvas></div>
+<script type="module" src="/src/app.js"></script>
+</body>
+</html>

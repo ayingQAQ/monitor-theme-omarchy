@@ -1,0 +1,14 @@
+Runtime source attribution
+==========================
+komari-theme-omarchy (e7f51d6429ab236784445a4f06e0d5c285734b7a)
+Copyright (c) 2026 with5
+MIT License -- complete terms are distributed in LICENSE.
+
+No third-party runtime package is bundled. The original Omarchy palette collection and ASCII renderer are part of the MIT-licensed upstream source described in THIRD_PARTY.md.
+
+Development-only dependencies (not shipped in theme.tar.gz)
+=========================================================
+Vite: MIT
+@playwright/test / Playwright: Apache-2.0
+ws: MIT
+Transitive dependencies retain their respective licenses in node_modules; exact versions are locked by package-lock.json.
