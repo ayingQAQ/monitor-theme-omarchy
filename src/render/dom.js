@@ -10,6 +10,11 @@ export function mount(element,html) {
     if(!tags.has(el.tagName)){el.replaceWith(doc.createTextNode(el.textContent));continue;}
     for(const attr of [...el.attributes])if(!attrs.has(attr.name))el.removeAttribute(attr.name);
   }
-  element.replaceChildren(...[...doc.body.childNodes].map(n=>document.importNode(n,true)));element._markup=html;
-  if(identity){const [key,value]=identity;[...element.querySelectorAll(`[${key}]`)].find(el=>el.getAttribute(key)===value)?.focus({preventScroll:true});}
+  const previous=[...element.childNodes],next=[...doc.body.childNodes];
+  // Keep unchanged terminal rows mounted while live metrics replace changed rows.
+  if(previous.length===next.length){
+    next.forEach((node,i)=>{if(!previous[i].isEqualNode(node))previous[i].replaceWith(document.importNode(node,true));});
+  }else element.replaceChildren(...next.map(n=>document.importNode(n,true)));
+  element._markup=html;
+  if(identity&&!element.contains(document.activeElement)){const [key,value]=identity;[...element.querySelectorAll(`[${key}]`)].find(el=>el.getAttribute(key)===value)?.focus({preventScroll:true});}
 }

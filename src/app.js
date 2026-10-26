@@ -136,7 +136,7 @@ function summary() {
 
 function render() {
   const list = visibleNodes();
-  const sig = list.map((n) => n.id).join() + "|" + W;
+  const sig = JSON.stringify(list.map((n) => n.id));
   if (sig !== lastSig) { lastSig = sig; $("grid").replaceChildren(...list.map((n) => cardEl(n.id))); }
   curList = list;
   cursor = Math.max(0, Math.min(cursor, list.length - 1));
@@ -439,8 +439,21 @@ addEventListener('pageshow',e=>{if(e.persisted&&!document.hidden){lastSample=0;s
 // ---- boot ----
 banner=new OFX.Banner($('banner'),color);
 applyPalette('catppuccin');setLang(detect(''),false);applyStatic();
-let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{cwCache=0;layout();},120);});
-document.fonts?.ready.then(()=>{cwCache=0;layout();});document.fonts?.addEventListener('loadingdone',()=>{cwCache=0;layout();});
+// Resize geometry and character content together before the next paint.
+let layoutFrame=0;
+function scheduleLayout(){
+ if(layoutFrame)return;
+ layoutFrame=requestAnimationFrame(()=>{layoutFrame=0;layout();});
+}
+addEventListener('resize',scheduleLayout);
+let observedWidth=document.documentElement.clientWidth;
+const layoutObserver=new ResizeObserver(()=>{
+ const width=document.documentElement.clientWidth;
+ if(width!==observedWidth){observedWidth=width;scheduleLayout();}
+});
+layoutObserver.observe(document.documentElement);
+const fontsChanged=()=>{cwCache=0;scheduleLayout();};
+document.fonts?.ready.then(fontsChanged);document.fonts?.addEventListener('loadingdone',fontsChanged);
 $('search-button').addEventListener('click',openSearch);
 Promise.all([api('/me').catch(e=>{ $('connection').textContent=e.message;return {}; }),api(`/themes/${manifest.short}/config`).catch(()=>({}))]).then(([me,saved])=>{
  site=me||{};settings=resolveConfig(manifest.config,saved);siteName=site.site_name||'Monitor';document.title=siteName;

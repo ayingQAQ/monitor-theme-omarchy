@@ -1,4 +1,38 @@
 import {test,expect} from '@playwright/test';
+import {nodes as demoNodes} from '../../dev/hub.js';
+
+test('live metrics preserve unchanged rows and the current scroll position',async({page})=>{
+ let socket;const nodes=demoNodes();
+ await page.routeWebSocket('**/api/ws*',ws=>{socket=ws;ws.send(JSON.stringify({nodes}));});
+ await page.route('**/api/nodes',r=>r.fulfill({json:{nodes}}));
+ await page.setViewportSize({width:640,height:500});await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);
+ await page.evaluate(()=>{window.keptTitle=document.querySelector('.card .ln.t');window.keptMeter=document.querySelectorAll('.card .ln.s')[3];scrollTo(0,400);});
+ const top=await page.evaluate(()=>scrollY);
+ nodes[0].metrics.cpu=73.5;socket.send(JSON.stringify({nodes}));
+ await expect(page.locator('.card').first()).toContainText('73.5%');
+ expect(await page.evaluate(()=>window.keptTitle===document.querySelector('.card .ln.t'))).toBe(true);
+ expect(await page.evaluate(()=>window.keptMeter===document.querySelectorAll('.card .ln.s')[3])).toBe(true);
+ expect(await page.evaluate(()=>scrollY)).toBe(top);
+});
+
+test('scrolling a large list preserves pixel meters and card geometry',async({page})=>{
+ const source=demoNodes();
+ const nodes=Array.from({length:30},(_,i)=>({...source[i%source.length],id:i+1,name:`node-${i+1}`}));
+ await page.routeWebSocket('**/api/ws*',ws=>ws.send(JSON.stringify({nodes})));
+ await page.route('**/api/nodes',r=>r.fulfill({json:{nodes}}));
+ await page.setViewportSize({width:1540,height:850});await page.goto('/');
+ await expect(page.locator('.card')).toHaveCount(30);await page.screenshot();
+ const before=await page.locator('#grid').evaluate(el=>el.querySelectorAll('*').length);
+ console.log(`30-node list DOM elements: ${before}`);
+ expect(before).toBeLessThan(7000);
+ for(const y of [800,1600,400,2200,0]){
+  await page.evaluate(y=>scrollTo(0,y),y);
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(resolve)));
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ }
+ const meter=await page.locator('.meter-fill').first().evaluate(el=>({width:el.getBoundingClientRect().width,cells:el.querySelectorAll('.cell').length,ch:el.querySelector('.cell').getBoundingClientRect().width}));
+ expect(Math.abs(meter.width-meter.cells*meter.ch)).toBeLessThan(1);
+});
 test('fresh visitors start with Catppuccin and can use terminal-styled controls',async({page})=>{
  await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);await expect(page.locator('#st-pal')).toHaveText('catppuccin');await expect(page.locator('.palette-control')).toBeVisible();await page.locator('#palette').selectOption('nord');await expect(page.locator('#st-pal')).toHaveText('nord');
 });
@@ -50,6 +84,22 @@ test('card rows fill available width and column count stays stable after font lo
  await page.setViewportSize({width:1645,height:850});await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);await page.screenshot();
  const geometry=()=>page.locator('#grid').evaluate(el=>{const cards=[...el.children].map(n=>n.getBoundingClientRect()),first=cards.filter(r=>r.top===cards[0].top),grid=el.getBoundingClientRect();return {columns:first.length,left:first[0].left-grid.left,right:grid.right-first.at(-1).right};});
  let g=await geometry();expect(g.columns).toBe(4);expect(g.left).toBeLessThanOrEqual(9);expect(g.right).toBeLessThanOrEqual(9);await page.setViewportSize({width:1630,height:850});await page.waitForTimeout(250);g=await geometry();expect(g.columns).toBe(4);expect(g.right).toBeLessThanOrEqual(9);
+});
+test('rapid consecutive resizes keep columns and text synchronized on every frame',async({page})=>{
+ await page.setViewportSize({width:1645,height:850});await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);await page.screenshot();
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ for(const width of [375,1360,640,1040,320,1540,530,1360]){
+  await page.setViewportSize({width,height:850});
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  const size=await page.locator('#grid').evaluate(el=>({columns:Number(el.style.getPropertyValue('--columns')),expected:Math.max(1,Math.floor((document.documentElement.clientWidth-16+14)/334)),clipped:[...el.querySelectorAll('.card')].some(card=>[...card.querySelectorAll('.ln.s > .w')].some(n=>n.getBoundingClientRect().right>card.getBoundingClientRect().right+2))}));
+  expect(size.columns,`columns at ${width}px`).toBe(size.expected);expect(size.clipped,`clipped metrics at ${width}px`).toBe(false);
+ }
+ await expect(page.locator('.card')).toHaveCount(6);expect(errors).toEqual([]);
+});
+test('resizing retains the focused card and immediately redraws detail charts',async({page})=>{
+ await page.goto('/');const card=page.getByRole('link',{name:'tokyo-1',exact:true});await card.focus();await page.setViewportSize({width:640,height:850});await page.waitForTimeout(180);await expect(card).toBeFocused();
+ await page.keyboard.press('Enter');await expect(page.locator('.ping-chart svg').first()).toBeVisible();
+ for(const width of [320,1360,375,1040]){await page.setViewportSize({width,height:850});await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);}
 });
 test('native buttons activate with Enter and retain focus across snapshots',async({page})=>{
  await page.goto('/');const group=page.getByRole('button',{name:'[prod]',exact:true});await group.focus();await page.keyboard.press('Enter');await expect(page.locator('.card')).toHaveCount(2);await expect(page).not.toHaveURL(/node/);
