@@ -105,8 +105,20 @@ jobs:
           notes="docs/releases/$RELEASE_TAG.md"
           if existing=$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft 2>/dev/null); then
             if [[ "$existing" != true ]]; then
-              echo "Release $RELEASE_TAG is already public; refusing to replace published files."
-              exit 1
+              # Reruns validate immutable public files and succeed without overwriting them.
+              published_commit=$(gh api "repos/$GH_REPO/commits/$RELEASE_TAG" --jq .sha)
+              [[ "$published_commit" == "$(git rev-parse HEAD)" ]]
+              existing_dir=$(mktemp -d)
+              trap 'rm -rf -- "$existing_dir"' EXIT
+              gh release download "$RELEASE_TAG" --pattern theme.tar.gz --pattern theme.tar.gz.sha256 --pattern preview.png --dir "$existing_dir"
+              for required in theme.tar.gz theme.tar.gz.sha256 preview.png; do
+                test -s "$existing_dir/$required"
+              done
+              node --input-type=module -e 'import fs from "node:fs"; import assert from "node:assert/strict"; assert.equal(fs.readFileSync(process.argv[1]).subarray(0,8).toString("hex"),"89504e470d0a1a0a");' "$existing_dir/preview.png"
+              (cd "$existing_dir" && sha256sum -c theme.tar.gz.sha256 && gzip -t theme.tar.gz)
+              node scripts/check-package.mjs "$existing_dir/theme.tar.gz"
+              echo "Release $RELEASE_TAG is already public and verified."
+              exit 0
             fi
             gh release upload "$RELEASE_TAG" release-files/theme.tar.gz release-files/theme.tar.gz.sha256 release-files/preview.png --clobber
           else

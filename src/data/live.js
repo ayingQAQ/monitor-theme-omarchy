@@ -20,12 +20,18 @@ export function createLive({receive,error,fetchNodes,Socket=WebSocket,url,timers
     if(!active)return;
     const g=generation;
     try{socket=new Socket(url);}catch(e){error(e);cover();return;}
-    const opened=socket;
+    const opened=socket;opened.binaryType='arraybuffer';
     const current=()=>active&&g===generation&&socket===opened;
     function watchdog(){timers.clearTimeout(watch);watch=timers.setTimeout(()=>{if(!current())return;interrupted=true;error(new Error('Live data interrupted / 实时数据中断，正在重连'));resume();},10000);}
     watchdog();let queue=Promise.resolve();
     opened.onmessage=event=>{queue=queue.then(async()=>{
-      const raw=typeof event.data==='string'?event.data:await new Response(event.data.stream().pipeThrough(new DecompressionStream('gzip'))).text();
+      if(!current()||opened.readyState!==1)return;
+      let raw=event.data;
+      if(typeof raw!=='string'){
+        const bytes=typeof raw?.arrayBuffer==='function'?await raw.arrayBuffer():raw;
+        if(!current())return;
+        raw=await new Response(new Response(bytes).body.pipeThrough(new DecompressionStream('gzip'))).text();
+      }
       if(!current()||opened.readyState!==1)return;
       accept(JSON.parse(raw),true);healthy=true;timers.clearTimeout(recovery);recovery=null;watchdog();
     }).catch(()=>{/* Bad frames never rearm the silence watchdog. */});};

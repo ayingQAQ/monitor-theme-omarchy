@@ -2,7 +2,7 @@ import {box,bytes,uptime,ms,graph,meter,clip,txt,padR} from '../render/util.js';
 import {mount} from '../render/dom.js';
 import {drawPingChart} from '../render/ping-chart.js';
 import {ranges,pingModel,series,expiry,trafficUsed,finite} from '../data/model.js';
-import {history,clearHistory} from '../data/history.js';
+import {history,clearHistory,retainHistory} from '../data/history.js';
 import {getLang,t} from '../i18n/index.js';
 
 const $=id=>document.getElementById(id),word=(en,zh)=>getLang()==='zh'?zh:en;
@@ -78,7 +78,7 @@ export function createDetail(app){
  }
  function layout(){width=Math.max(20,Math.min(110,Math.floor((innerWidth-24)/app.cw())));$('detail').style.setProperty('--dw',width);render();}
  function show(next){if(id===next){render();return;}stop();id=next;tab='overview';zoom=null;selected=0;slots={metrics:null,ping:null};$('detail').hidden=false;layout();ensure();timer=setInterval(()=>ensure(),30000);scrollTo(0,0);}
- function hide(){stop();id=null;$('detail').hidden=true;}
+ function hide(){stop();id=null;slots={metrics:null,ping:null};loading=false;failure=null;$('detail').hidden=true;$('detail-body').replaceChildren();delete $('detail-body')._markup;}
  function setTab(next){if(next===tab)return;tab=next;zoom=null;ensure();app.status();}
  function setRange(i){rangeIndex=Math.max(0,Math.min(ranges(app.settings().history_days).length-1,i));zoom=null;slots={metrics:null,ping:null};ensure();app.status();}
  function key(e){const k=e.key;switch(k){
@@ -98,5 +98,5 @@ export function createDetail(app){
  $('detail-body').addEventListener('click',e=>{const b=e.target.closest('[data-tab]'),r=e.target.closest('[data-range]'),task=e.target.closest('[data-task]');if(b)setTab(b.dataset.tab);else if(r)setRange(+r.dataset.range);else if(task){zoom=+task.dataset.task;render();app.status();}});
  $('detail-body').addEventListener('keydown',e=>{if(e.target.closest('[data-task]')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();e.stopPropagation();zoom=+e.target.closest('[data-task]').dataset.task;render();}});
  document.addEventListener('visibilitychange',()=>{if(document.hidden){stop();}else if(id){ensure();timer=setInterval(()=>ensure(),30000);}});
- return {show,hide,key,render,layout,current:()=>id,clear(){clearHistory();slots={metrics:null,ping:null};hide();},active:()=>id!==null,info:()=>({mode:tab==='ping'?(zoom!==null?'ZOOM':'PING'):'DETAIL',name:node()?.name||'',pos:rangeLabel()})};
+ return {show,hide,key,render,layout,retain:retainHistory,current:()=>id,clear(){clearHistory();hide();},active:()=>id!==null,info:()=>({mode:tab==='ping'?(zoom!==null?'ZOOM':'PING'):'DETAIL',name:node()?.name||'',pos:rangeLabel()})};
 }

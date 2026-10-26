@@ -422,6 +422,9 @@ let lastSample=0, lastRoute='';
 const stream=createLive({url:`${location.protocol==='https:'?'wss':'ws'}://${location.host}/api/ws${typeof DecompressionStream==='function'?'?gzip':''}`,fetchNodes:signal=>api('/nodes',{signal}),
  receive(list){
   const gap=Date.now()-lastSample>10000; lastSample=Date.now(); nodes=list;
+  const ids=new Set(nodes.map(n=>n.id));
+  for(const [id,el]of els)if(!ids.has(id)){el.remove();els.delete(id);lastSig='';}
+  detail.retain(ids);
   sampleHistory(hist,nodes,gap);
   if(group!==null&&!nodes.some(n=>n.group===group))group=null;
   setupGroups();

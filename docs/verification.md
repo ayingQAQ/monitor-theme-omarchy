@@ -1,5 +1,14 @@
 # Verification record
 
+## v1.0.0 preparation — 2026-10-26
+
+- 22 Node tests passed, including history TTL/LRU, entry/point/estimated-size budgets, clear/retain races, binary WebSocket ordering, unread stale-frame cleanup, and 120-sample limits.
+- The final local Windows three-engine run had 86/87 passing cases. WebKit's existing `loaded fonts and viewport resizing keep character geometry aligned` case timed out waiting for `.blk` under the default five-second assertion; its two immediate isolated runs both passed. This full run is not recorded as 87/87. All new node-removal, detail cleanup, route, and cache regressions passed across the three engines.
+- An earlier repeatable WebKit Blob-stream access-control error was traced to `src/data/live.js` during reload. ArrayBuffer transport and pre-decode generation guards fixed it; the original routing/language/palette case then passed both in isolation and in the full run.
+- Production build, production runtime smoke, package validation, release tag/version validation, whitespace check, and actionlint passed. GitHub Actions performs the full release-gating Linux run before publishing v1.0.0.
+- Pixel meter rendering and visual CSS are unchanged. The history cache's approximate 4 MiB serialized-size budget is not a total JavaScript heap cap. Entries also have a 20,000-point combined budget and 25-second TTL; very large responses remain available for the active detail page but are not cached.
+- v0.1.3's main check succeeded; its red tag check was cancelled during manual publication. v1.0.0 is published by an uninterrupted tag workflow. Reruns validate all existing public release assets without replacing them.
+
 Date: 2026-10-26. Initial implementation verified locally; public release preparation targets `ayingQAQ/monitor-theme-omarchy`, tag `v0.1.0`.
 
 Final results: 14/14 Node tests and 51/51 browser cases passed (17 each in Chromium, Firefox and WebKit). Production build, compiled-page smoke check, screenshot width assertions, archive validation and staged whitespace check passed. Archive size and digest change when release metadata is filled. The packaged manifest, archive root and limits are checked on each build; the current SHA-256 is stored in `theme.tar.gz.sha256`.

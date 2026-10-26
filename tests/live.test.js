@@ -22,6 +22,14 @@ test('text and gzip frames decode serially; old connection frames cannot commit'
 test('closed connection polls and reconnects; accepted stream stops polling',async()=>{
  let reads=0;const s=setup(async()=>{reads++;return {nodes:[]};});s.live.resume();await tick();s.sockets[0].close();s.fire(5000);await tick();assert.ok(reads>=2);assert.equal(s.sockets.length,2);s.sockets[1].sendFrame('{"nodes":[]}');await tick();assert.ok(![...s.jobs.values()].some(j=>j.ms===5000));s.live.stop();assert.equal(s.jobs.size,0);
 });
+
+test('binary snapshots use ArrayBuffer transport and stopped queues release unread frames',async()=>{
+ const s=setup();s.live.resume();await tick();assert.equal(s.sockets[0].binaryType,'arraybuffer');
+ const compressed=await new Response(new Blob([JSON.stringify({nodes:[{id:9}]})]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+ s.sockets[0].sendFrame(compressed);await new Promise(r=>setTimeout(r,40));assert.equal(s.received.at(-1)[0].id,'9');
+ let reads=0;const frame={stream(){reads++;return new Blob([]).stream();},async arrayBuffer(){reads++;return compressed;}};
+ s.sockets[0].sendFrame(frame);s.sockets[0].sendFrame(frame);s.live.pause();await tick();assert.equal(reads,0);
+});
 test('REST recovery preserves transport interruption until a valid stream frame',async()=>{
  const s=setup();s.live.resume();await tick();s.sockets[0].sendFrame('{"nodes":[]}');await tick();s.sockets[0].close();await tick();assert.ok(s.errors.at(-1));s.fire(5000);await tick();assert.ok(s.errors.at(-1));s.sockets[1].sendFrame('{"nodes":[]}');await tick();assert.equal(s.errors.at(-1),null);s.live.stop();
 });

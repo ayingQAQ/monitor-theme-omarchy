@@ -1,6 +1,38 @@
 import {test,expect} from '@playwright/test';
 import {nodes as demoNodes} from '../../dev/hub.js';
 
+test('removed nodes release cached cards while filtering retains current nodes',async({page})=>{
+ let socket;const nodes=demoNodes();
+ await page.routeWebSocket('**/api/ws*',ws=>{socket=ws;ws.send(JSON.stringify({nodes}));});
+ await page.route('**/api/nodes',r=>r.fulfill({json:{nodes}}));
+ await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);
+ await page.evaluate(()=>{window.originalCard=document.querySelector('.card');});
+ await page.getByRole('button',{name:'[home]',exact:true}).click();await page.getByRole('button',{name:'[all]',exact:true}).click();
+ expect(await page.evaluate(()=>window.originalCard===document.querySelector('.card'))).toBe(true);
+ socket.send(JSON.stringify({nodes:nodes.slice(1)}));await expect(page.locator('.card')).toHaveCount(5);
+ socket.send(JSON.stringify({nodes}));await expect(page.locator('.card')).toHaveCount(6);
+ expect(await page.evaluate(()=>window.originalCard===document.querySelector('.card'))).toBe(false);
+});
+
+test('leaving detail releases its chart DOM and markup without breaking the next visit',async({page})=>{
+ await page.goto('/#/node/1');await expect(page.locator('.ping-chart svg').first()).toBeVisible();
+ await page.keyboard.press('Escape');await expect(page.locator('#detail')).toBeHidden();
+ expect(await page.locator('#detail-body').evaluate(el=>({children:el.childNodes.length,markup:el._markup??null}))).toEqual({children:0,markup:null});
+ await page.locator('.card').first().click();await expect(page.locator('.ping-chart svg').first()).toBeVisible();
+});
+
+test('nodes removed and re-added during detail are present when returning to the list',async({page})=>{
+ let socket;const nodes=demoNodes();
+ await page.routeWebSocket('**/api/ws*',ws=>{socket=ws;ws.send(JSON.stringify({nodes}));});
+ await page.route('**/api/nodes',r=>r.fulfill({json:{nodes}}));
+ await page.goto('/');await expect(page.locator('.card')).toHaveCount(6);await page.locator('.card').first().click();
+ await expect(page.locator('#detail')).toBeVisible();socket.send(JSON.stringify({nodes:nodes.filter(n=>n.id!==2)}));
+ await expect(page.locator('#grid .card')).toHaveCount(5);socket.send(JSON.stringify({nodes}));
+ await expect(page.locator('#summary')).toContainText('5/6');await page.keyboard.press('Escape');
+ await expect(page.locator('#grid')).toBeVisible();await expect(page.locator('#grid .card')).toHaveCount(6);
+ await expect(page.getByRole('link',{name:'hk-edge',exact:true})).toBeVisible();
+});
+
 test('live metrics preserve unchanged rows and the current scroll position',async({page})=>{
  let socket;const nodes=demoNodes();
  await page.routeWebSocket('**/api/ws*',ws=>{socket=ws;ws.send(JSON.stringify({nodes}));});
