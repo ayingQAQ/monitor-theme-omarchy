@@ -91,6 +91,7 @@ body { padding-bottom: 34px; }
 .detail .ln.t { margin-top: 10px; }
 .detail .blk { --bc: var(--muted); }
 .detail .blk.cur { --bc: var(--accent); }
+.detail [role="alert"] { margin:8px 1ch; overflow-wrap:anywhere; }
 .tabs { display: flex; gap: 10px; align-items: center; }
 .tabs .tab { cursor: pointer; color: var(--dark-foreground); }
 .tabs .tab:hover { color: var(--foreground); }

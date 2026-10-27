@@ -14,6 +14,8 @@ function offline(n){if(n.online)return n.state==='waiting'?word('waiting for fir
 export function createDetail(app){
  let id=null,tab='overview',rangeIndex=0,selected=0,zoom=null,width=90,epoch=0,controller=null,timer=null,pendingG=0;
  let slots={metrics:null,ping:null},loading=false,failure=null;
+ let modelSource=null,modelTasks=[],pingEnd=0;
+ function resetSlots(){slots={metrics:null,ping:null};modelSource=null;modelTasks=[];pingEnd=0;}
  const node=()=>app.nodes().find(n=>n.id===id),hours=()=>ranges(app.settings().history_days)[Math.min(rangeIndex,ranges(app.settings().history_days).length-1)];
  const rangeLabel=()=>hours()<24?`${hours()}h`:`${hours()/24}d`;
  function stop(){epoch++;controller?.abort();controller=null;clearInterval(timer);timer=null;}
@@ -22,7 +24,7 @@ export function createDetail(app){
    const generation=++epoch;controller?.abort();const c=new AbortController();controller=c;loading=true;failure=null;render();
    const kinds=tab==='ping'?['ping']:['metrics','ping'];
    await Promise.all(kinds.map(async kind=>{
-    try{const data=await history(id,hours(),kind,Math.max(60,(width-6)*2),c.signal,force);if(generation===epoch)slots[kind]=data;}
+    try{const data=await history(id,hours(),kind,Math.max(60,(width-6)*2),c.signal,force);if(generation===epoch){slots[kind]=data;if(kind==='ping')pingEnd=Date.now()/1000;}}
     catch(e){if(generation===epoch&&!c.signal.aborted){failure=e.message;if(e.status===401)dispatchEvent(new CustomEvent('monitor-denied',{detail:e}));}}
    }));
    if(generation===epoch){loading=false;controller=null;render();app.status();}
@@ -53,17 +55,16 @@ export function createDetail(app){
   if(m){const load=Array.isArray(m.load)&&m.load.every(finite)?m.load.map(v=>v.toFixed(2)).join(' '):'—';L.push(b.row([['d',` load ${load}`]]));L.push(b.row([['d',` tcp ${val(m.tcp)}  udp ${val(m.udp)}  procs ${val(m.procs)}`]]));}
   L.push(b.row([['d',` -${rangeLabel()}${' '.repeat(Math.max(1,I-rangeLabel().length-10))}${t('now')}`]]));
   if(loading)L.push(b.row([['d',' '+t('loading')]]));else if(!points.length)L.push(b.row([['d',' '+t('noHist')]]));
-  if(failure)L.push(b.row([['r',' '+clip(failure,I-2)]]));
   L.push(b.bottom());return L.join('');
  }
- const tasks=()=>pingModel(slots.ping||{});
- function taskBlock(I,task,big){
+ const tasks=()=>{if(modelSource!==slots.ping){modelSource=slots.ping;modelTasks=pingModel(slots.ping||{});}return modelTasks;};
+ function taskBlock(I,task,big,current){
   const b=box(I),L=[b.top(` ${task.name} `)];
   const stats=[[word('last bucket','最近时间桶'),ms(task.last)],[word('min','最低'),ms(task.min)],[word('max','最高'),ms(task.max)],[word('loss','丢包'),task.loss===null?'—':`${task.loss.toFixed(1)}%`]];
   L.push(`<div class="ping-stats">${stats.map(([label,value])=>`<span><span class="d">${txt(label)} </span><span class="w">${txt(value)}</span></span>`).join('')}</div>`);
   L.push(`<div class="ping-chart${big?' big':''}" data-ping="${task.id}"></div>`);
   L.push(b.row([['d',` -${rangeLabel()} · ${word('bucket median · × loss','时间桶中位数 · × 丢包')}`]]));
-  L.push(b.bottom());return `<div class="blk${task.id===(zoom??tasks()[selected]?.id)?' cur':''}" data-task="${task.id}" tabindex="0" role="button" aria-label="${task.id}">${L.join('')}</div>`;
+  L.push(b.bottom());return `<div class="blk${task.id===current?' cur':''}" data-task="${task.id}" tabindex="0" role="button" aria-label="${task.id}">${L.join('')}</div>`;
  }
  function render(){
   if(!id)return;const n=node();if(!n)return;const I=width-2,rs=ranges(app.settings().history_days);
@@ -71,16 +72,19 @@ export function createDetail(app){
   controls+=rs.map((h,i)=>`<button class="tab${i===rangeIndex?' on':''}" data-range="${i}">${h<24?h+'h':h/24+'d'}</button>`).join('')+'</div>';
   const title=`<div class="dhead"><span class="${n.online?'g':'r'}">●</span> ${txt(n.state==='online'?t('up',{t:uptime(n.metrics.uptime)}):offline(n))}</div>`;
   const ts=tasks();selected=Math.max(0,Math.min(selected,ts.length-1));if(zoom!==null&&!ts.some(x=>x.id===zoom))zoom=null;
-  const ping=ts.length?(zoom!==null?ts.filter(x=>x.id===zoom):ts).map(x=>taskBlock(I,x,zoom!==null)).join(''):`<div class="empty">${txt(loading?t('loading'):failure||t('noTasks'))}</div>`;
-  mount($('detail-body'),title+controls+(tab==='ping'?ping:configBox(I,n)+resources(I,n)+`<div class="rule">${txt(t('sec.ping'))}</div>`+ping));
-  const end=Date.now()/1000,start=end-hours()*3600;
+  const current=zoom??ts[selected]?.id;
+  const ping=ts.length?(zoom!==null?ts.filter(x=>x.id===zoom):ts).map(x=>taskBlock(I,x,zoom!==null,current)).join(''):`<div class="empty">${txt(loading?t('loading'):failure?'':t('noTasks'))}</div>`;
+  const warning=failure?`<div class="r" role="alert">${txt(word('History refresh failed; any previous data shown may be outdated.','历史刷新失败；当前保留的数据可能已过时。'))} ${txt(failure)}</div>`:'';
+  mount($('detail-body'),title+controls+warning+(tab==='ping'?ping:configBox(I,n)+resources(I,n)+`<div class="rule">${txt(t('sec.ping'))}</div>`+ping),{preserveRendered:true});
+  // Freeze the time axis with the history response, not each live CPU snapshot.
+  const end=pingEnd,start=end-hours()*3600;
   for(const host of $('detail-body').querySelectorAll('[data-ping]')){const task=ts.find(x=>x.id===Number(host.dataset.ping));if(task)drawPingChart(host,task,{start,end,step:slots.ping?.step||60,language:getLang()});}
  }
  function layout(){width=Math.max(20,Math.min(110,Math.floor((innerWidth-24)/app.cw())));$('detail').style.setProperty('--dw',width);render();}
- function show(next){if(id===next){render();return;}stop();id=next;tab='overview';zoom=null;selected=0;slots={metrics:null,ping:null};$('detail').hidden=false;layout();ensure();timer=setInterval(()=>ensure(),30000);scrollTo(0,0);}
- function hide(){stop();id=null;slots={metrics:null,ping:null};loading=false;failure=null;$('detail').hidden=true;$('detail-body').replaceChildren();delete $('detail-body')._markup;}
+ function show(next){if(id===next){render();return;}stop();id=next;tab='overview';zoom=null;selected=0;resetSlots();$('detail').hidden=false;layout();ensure();timer=setInterval(()=>ensure(),30000);scrollTo(0,0);}
+ function hide(){stop();id=null;resetSlots();loading=false;failure=null;$('detail').hidden=true;$('detail-body').replaceChildren();delete $('detail-body')._markup;}
  function setTab(next){if(next===tab)return;tab=next;zoom=null;ensure();app.status();}
- function setRange(i){rangeIndex=Math.max(0,Math.min(ranges(app.settings().history_days).length-1,i));zoom=null;slots={metrics:null,ping:null};ensure();app.status();}
+ function setRange(i){rangeIndex=Math.max(0,Math.min(ranges(app.settings().history_days).length-1,i));zoom=null;resetSlots();ensure();app.status();}
  function key(e){const k=e.key;switch(k){
   case 'h':case '[':case 'ArrowLeft':setRange(rangeIndex-1);break;
   case 'l':case ']':case 'ArrowRight':setRange(rangeIndex+1);break;

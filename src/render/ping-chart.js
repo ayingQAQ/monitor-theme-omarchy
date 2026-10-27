@@ -26,9 +26,13 @@ const dayFormat=new Intl.DateTimeFormat(undefined,{month:'2-digit',day:'2-digit'
 const dateTimeFormat=new Intl.DateTimeFormat(undefined,{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
 const time=ts=>clockFormat.format(new Date(ts*1000));
 const latency=v=>v>=1000?`${Number((v/1000).toPrecision(2))} s`:`${v<10?Number(v.toFixed(1)):Math.round(v)} ms`;
+// Weak keys allow charts from closed detail pages to be collected.
+const rendered=new WeakMap();
 
 export function drawPingChart(host,task,{start,end,step=60,language='en'}={}) {
  const width=Math.max(180,host.clientWidth),height=host.classList.contains('big')?240:160;
+ const prior=rendered.get(host);
+ if(prior&&prior.task===task&&prior.start===start&&prior.end===end&&prior.step===step&&prior.language===language&&prior.width===width&&prior.height===height&&host.firstChild===prior.svg)return;
  const g=lineGeometry(task.points,{start,end,width,height,step});
  const svg=element('svg',{viewBox:`0 0 ${width} ${height}`,width:'100%',height,role:'img','aria-label':`${task.name} · ${language==='zh'?'延迟折线图，时间桶中位数':'latency line, bucket medians'}`});
  svg.append(element('title',{},`${task.name} · ${language==='zh'?'延迟折线；缺失数据不连线；× 表示丢包':'Latency line; gaps are not connected; × marks packet loss'}`));
@@ -40,4 +44,5 @@ export function drawPingChart(host,task,{start,end,step=60,language='en'}={}) {
  for(const p of g.loss){const mark=element('path',{d:`M${p.x-3},${g.bottom-3}l6,6m-6,0l6,-6`,class:'ping-loss',fill:'none','stroke-width':1.3});mark.append(element('title',{},`${time(p.ts)} · ${language==='zh'?'丢包':'loss'} ${p.value}%`));svg.append(mark);}
  if(!g.points.length)svg.append(element('text',{x:(g.left+g.right)/2,y:(g.top+g.bottom)/2,'text-anchor':'middle',class:'ping-axis'},language==='zh'?'无有效延迟数据':'No latency samples'));
  host.replaceChildren(svg);
+ rendered.set(host,{task,start,end,step,language,width,height,svg});
 }

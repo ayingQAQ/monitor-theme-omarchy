@@ -460,6 +460,6 @@ document.fonts?.ready.then(fontsChanged);document.fonts?.addEventListener('loadi
 $('search-button').addEventListener('click',openSearch);
 Promise.all([api('/me').catch(e=>{ $('connection').textContent=e.message;return {}; }),api(`/themes/${manifest.short}/config`).catch(()=>({}))]).then(([me,saved])=>{
  site=me||{};settings=resolveConfig(manifest.config,saved);siteName=site.site_name||'Monitor';document.title=siteName;
- $('demo').hidden=!site.demo;setLang(detect(settings.language),false);applyPalette(currentPalette());setupPaletteSelect();calcWidth();setBanner(siteBanner(),!reduceMotion()&&settings.intro!=='off',settings.intro==='random'?undefined:settings.intro);render();armIdle();
+ $('demo').hidden=!site.demo;setLang(detect(settings.language),false);applyPalette(currentPalette());setupPaletteSelect();calcWidth();setBanner(nodes.find(n=>n.id===detail.current())?.name??siteBanner(),!reduceMotion()&&settings.intro!=='off',settings.intro==='random'?undefined:settings.intro);render();if(detail.active())detail.render();armIdle();
 });
 stream.resume();

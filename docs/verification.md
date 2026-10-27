@@ -1,5 +1,14 @@
 # Verification record
 
+## v1.0.1 preparation — 2026-10-27
+
+- Reproduced all three review findings before fixing them: late site metadata overwriting the node banner, hidden ping refresh failures, and redundant ping model/SVG rebuilding on live node updates.
+- 22 Node tests, production build/runtime smoke, tag/version validation, archive validation and whitespace checks passed locally.
+- The local full browser run passed all 87 existing cases. Four of the nine new cases failed because the new test used an exact Chinese accessible name despite character spans, or read layout before WebKit completed a resize. After correcting the locator and waiting for layout, the complete nine-case regression file passed in Chromium, Firefox and WebKit. The release workflow runs all 96 cases together before publishing.
+- With 24 probes and 3,840 points, a CPU-only snapshot preserves every existing SVG and performs zero ping sorts (previously 624). History replacement, viewport changes, language switching, zoom and time-range navigation are covered by browser checks.
+- A Chromium check entered and left detail 20 times. After forced garbage collection at visits 5/10/15/20, DOM counters remained at one document, 3,156 nodes and 56 listeners. JavaScript used heap was approximately 3.4/3.7/3.7/3.7 MB. This is a bounded repeat-navigation check, not a long-duration or total-process-memory guarantee.
+- Current detail models are cleared on exit/range/node changes. DOM templates and chart render state use weak keys; templates are detached clones in the main document so they do not retain an entire temporary parsing document. Pixel meters and their rendering code are unchanged; the only visual CSS addition wraps error messages on narrow screens.
+
 ## v1.0.0 preparation — 2026-10-26
 
 - 22 Node tests passed, including history TTL/LRU, entry/point/estimated-size budgets, clear/retain races, binary WebSocket ordering, unread stale-frame cleanup, and 120-sample limits.
